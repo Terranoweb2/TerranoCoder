@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script src="https://api.tempolabs.ai/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js"></script>
+    <script>
+      window.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+          if (label === "json") {
+            return "/node_modules/monaco-editor/min/vs/language/json/json.worker.js";
+          }
+          if (label === "css" || label === "scss" || label === "less") {
+            return "/node_modules/monaco-editor/min/vs/language/css/css.worker.js";
+          }
+          if (label === "html" || label === "handlebars" || label === "razor") {
+            return "/node_modules/monaco-editor/min/vs/language/html/html.worker.js";
+          }
+          if (label === "typescript" || label === "javascript") {
+            return "/node_modules/monaco-editor/min/vs/language/typescript/ts.worker.js";
+          }
+          return "/node_modules/monaco-editor/min/vs/editor/editor.worker.js";
+        },
+      };
+    </script>
+  </body>
+</html>
