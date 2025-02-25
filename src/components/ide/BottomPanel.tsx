@@ -1,36 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useRef, KeyboardEvent } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Terminal, Bug, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useIDE } from "@/contexts/IDEContext";
+import { supabase } from "@/lib/supabase";
 
 interface BottomPanelProps {
   isOpen?: boolean;
   onClose?: () => void;
   defaultTab?: string;
-  terminalContent?: string[];
-  debugContent?: string[];
-  previewUrl?: string;
 }
 
 const BottomPanel = ({
   isOpen = true,
   onClose = () => {},
   defaultTab = "terminal",
-  terminalContent = [
-    "> npm install",
-    "added 1234 packages in 2m",
-    "> npm start",
-    "Server running at http://localhost:3000",
-  ],
-  debugContent = [
-    "Debug session started.",
-    "Breakpoint hit at line 42",
-    "Variable x = 10",
-  ],
-  previewUrl = "https://example.com",
 }: BottomPanelProps) => {
+  const { terminalOutput, setTerminalOutput } = useIDE();
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [command, setCommand] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
+  const handleCommand = async () => {
+    if (!command.trim()) return;
+
+    try {
+      setTerminalOutput([...terminalOutput, `$ ${command}`]);
+      const { data, error } = await supabase.functions.invoke("terminal", {
+        body: { command },
+      });
+
+      if (error) throw error;
+
+      if (data?.output) {
+        setTerminalOutput((prev) => [...prev, data.output]);
+      }
+    } catch (error) {
+      console.error("Error executing command:", error);
+      setTerminalOutput((prev) => [...prev, "Error executing command"]);
+    }
+
+    setCommand("");
+    scrollToBottom();
+  };
+
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleCommand();
+    }
+  };
+
+  const handleClear = () => {
+    setTerminalOutput([]);
+  };
 
   if (!isOpen) return null;
 
@@ -53,38 +83,55 @@ const BottomPanel = ({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hover:bg-zinc-700"
-          onClick={onClose}
-        >
-          <X className="w-4 h-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-zinc-700"
+            onClick={handleClear}
+          >
+            Clear
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-zinc-700"
+            onClick={onClose}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} className="h-full">
-          <TabsContent value="terminal" className="h-full">
-            <ScrollArea className="h-full p-4">
+          <TabsContent value="terminal" className="h-full flex flex-col">
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               <div className="font-mono text-sm text-zinc-300">
-                {terminalContent.map((line, index) => (
+                {terminalOutput.map((line, index) => (
                   <div key={index} className="mb-1">
                     {line}
                   </div>
                 ))}
               </div>
             </ScrollArea>
+            <div className="p-2 border-t border-zinc-700">
+              <Input
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter command..."
+                className="bg-zinc-800 border-zinc-700 text-zinc-300"
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="debug" className="h-full">
             <ScrollArea className="h-full p-4">
               <div className="font-mono text-sm text-zinc-300">
-                {debugContent.map((line, index) => (
-                  <div key={index} className="mb-1">
-                    {line}
-                  </div>
-                ))}
+                <div className="mb-1">Debug session started.</div>
+                <div className="mb-1">Breakpoint hit at line 42</div>
+                <div className="mb-1">Variable x = 10</div>
               </div>
             </ScrollArea>
           </TabsContent>
@@ -92,7 +139,7 @@ const BottomPanel = ({
           <TabsContent value="preview" className="h-full">
             <div className="w-full h-full bg-white">
               <iframe
-                src={previewUrl}
+                src={import.meta.env.VITE_PREVIEW_URL}
                 className="w-full h-full"
                 title="Preview"
                 sandbox="allow-same-origin allow-scripts"

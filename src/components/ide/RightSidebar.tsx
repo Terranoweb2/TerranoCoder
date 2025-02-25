@@ -10,7 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Package, MessageSquare, Users } from "lucide-react";
+import { Search, Package, MessageSquare, Users, BarChart } from "lucide-react";
+import AIAssistant from "./features/AIAssistant";
+import SmartSearch from "./features/SmartSearch";
+import CodeAnalytics from "./features/CodeAnalytics";
 
 interface RightSidebarProps {
   isOpen?: boolean;
@@ -77,7 +80,7 @@ const RightSidebar = ({ isOpen = true, onClose }: RightSidebarProps) => {
     <div className="w-[300px] h-full border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex flex-col">
       <Tabs defaultValue="extensions" className="w-full">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="extensions">
               <Package className="h-4 w-4" />
             </TabsTrigger>
@@ -87,57 +90,18 @@ const RightSidebar = ({ isOpen = true, onClose }: RightSidebarProps) => {
             <TabsTrigger value="team">
               <Users className="h-4 w-4" />
             </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <BarChart className="h-4 w-4" />
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="extensions" className="p-0">
-          <div className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-              <Input
-                placeholder="Search extensions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-          <ScrollArea className="h-[calc(100vh-130px)]">
-            <div className="p-4 space-y-4">
-              {mockExtensions.map((extension) => (
-                <Card key={extension.id}>
-                  <CardHeader>
-                    <CardTitle className="text-sm">{extension.name}</CardTitle>
-                    <CardDescription className="text-xs">
-                      {extension.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-xs text-gray-500">
-                      {extension.downloads} downloads
-                    </div>
-                    <Button size="sm" variant="outline" className="mt-2 w-full">
-                      Install
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
+        <TabsContent value="extensions" className="p-0 h-[calc(100vh-80px)]">
+          <SmartSearch />
         </TabsContent>
 
-        <TabsContent value="ai" className="p-0">
-          <ScrollArea className="h-[calc(100vh-80px)]">
-            <div className="p-4 space-y-4">
-              {mockAiSuggestions.map((suggestion) => (
-                <Card key={suggestion.id}>
-                  <CardContent className="p-4">
-                    <p className="text-sm">{suggestion.content}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
+        <TabsContent value="ai" className="p-0 h-[calc(100vh-80px)]">
+          <AIAssistant />
         </TabsContent>
 
         <TabsContent value="team" className="p-0">

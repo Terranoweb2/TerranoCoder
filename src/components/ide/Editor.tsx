@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useIDE } from "@/contexts/IDEContext";
+import { supabase } from "@/lib/supabase";
+import { updateFile } from "@/lib/file-manager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { monaco } from "@/lib/monaco";
+import { generateAIResponse } from "@/lib/ai-assistant";
 
 interface EditorTab {
   id: string;
@@ -67,15 +71,57 @@ const getLanguageFromFileName = (fileName: string): string => {
 };
 
 export default function Editor({
-  tabs = defaultTabs,
-  activeTab = "tab1",
-  onTabChange = () => {},
-  onTabClose = () => {},
   isFullscreen = false,
   onToggleFullscreen = () => {},
-  onChange = () => {},
 }: EditorProps) {
-  const [currentTab, setCurrentTab] = useState(activeTab);
+  const { openFiles, activeFile, saveFile, openFile, closeFile } = useIDE();
+  const [tabs, setTabs] = useState<EditorTab[]>([]);
+
+  useEffect(() => {
+    const loadFiles = async () => {
+      const loadedTabs = await Promise.all(
+        openFiles.map(async (path) => {
+          const { data: fileData } = await supabase
+            .from("files")
+            .select("*")
+            .eq("path", path)
+            .single();
+
+          return {
+            id: path,
+            title: path.split("/").pop() || path,
+            content: fileData?.content || "",
+            language: getLanguageFromFileName(path),
+          };
+        }),
+      );
+      setTabs(loadedTabs);
+    };
+    loadFiles();
+  }, [openFiles]);
+
+  const handleTabClose = (tabId: string) => {
+    closeFile(tabId);
+  };
+
+  const handleChange = async (content: string) => {
+    if (activeFile) {
+      try {
+        const { data: fileData } = await supabase
+          .from("files")
+          .select("id")
+          .eq("path", activeFile)
+          .single();
+
+        if (fileData) {
+          await saveFile(fileData.id, { content });
+        }
+      } catch (error) {
+        console.error("Error saving file:", error);
+      }
+    }
+  };
+  const [currentTab, setCurrentTab] = useState(activeFile);
   const editorRef = useRef<{
     [key: string]: monaco.editor.IStandaloneCodeEditor;
   }>({});
@@ -98,8 +144,19 @@ export default function Editor({
           tabSize: 2,
         });
 
-        editor.onDidChangeModelContent(() => {
-          onChange(editor.getValue());
+        editor.onDidChangeModelContent(async () => {
+          const content = editor.getValue();
+          handleChange(content);
+
+          // Optional: Get AI suggestions as you type
+          try {
+            const suggestion = await generateAIResponse(
+              `Review this code:\n${content}`,
+            );
+            // Handle the suggestion (e.g., show in a tooltip or sidebar)
+          } catch (error) {
+            console.error("Error getting AI suggestions:", error);
+          }
         });
 
         editorRef.current[tab.id] = editor;
@@ -115,7 +172,7 @@ export default function Editor({
 
   const handleTabChange = (tabId: string) => {
     setCurrentTab(tabId);
-    onTabChange(tabId);
+    openFile(tabId);
     setTimeout(() => {
       editorRef.current[tabId]?.layout();
     }, 0);

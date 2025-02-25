@@ -4,7 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <meta
+      name="description"
+      content="TerranoCoder - Advanced IDE for Modern Development"
+    />
+    <title>TerranoCoder - Advanced IDE for Modern Development</title>
+    <link rel="preconnect" href="https://api.deepseek.com" />
+    <link rel="preconnect" href="https://api.tempolabs.ai" />
   </head>
   <body>
     <div id="root"></div>
@@ -14,18 +20,18 @@
       window.MonacoEnvironment = {
         getWorkerUrl: function (moduleId, label) {
           if (label === "json") {
-            return "/node_modules/monaco-editor/min/vs/language/json/json.worker.js";
+            return "/monaco-editor/min/vs/language/json/json.worker.js";
           }
           if (label === "css" || label === "scss" || label === "less") {
-            return "/node_modules/monaco-editor/min/vs/language/css/css.worker.js";
+            return "/monaco-editor/min/vs/language/css/css.worker.js";
           }
           if (label === "html" || label === "handlebars" || label === "razor") {
-            return "/node_modules/monaco-editor/min/vs/language/html/html.worker.js";
+            return "/monaco-editor/min/vs/language/html/html.worker.js";
           }
           if (label === "typescript" || label === "javascript") {
-            return "/node_modules/monaco-editor/min/vs/language/typescript/ts.worker.js";
+            return "/monaco-editor/min/vs/language/typescript/ts.worker.js";
           }
-          return "/node_modules/monaco-editor/min/vs/editor/editor.worker.js";
+          return "/monaco-editor/min/vs/editor/editor.worker.js";
         },
       };
     </script>

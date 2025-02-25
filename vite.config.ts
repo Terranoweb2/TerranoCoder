@@ -12,10 +12,24 @@ if (process.env.TEMPO === "true") {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base:
-    process.env.NODE_ENV === "development"
-      ? "/"
-      : process.env.VITE_BASE_PATH || "/",
+  base: process.env.NODE_ENV === "production" ? "/" : "/",
+  build: {
+    outDir: "dist",
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: [
+            "react",
+            "react-dom",
+            "react-router-dom",
+            "@supabase/supabase-js",
+            "monaco-editor",
+          ],
+        },
+      },
+    },
+  },
   optimizeDeps: {
     entries: ["src/main.tsx", "src/tempobook/**/*"],
     include: ["monaco-editor/esm/vs/editor/editor.api"],
